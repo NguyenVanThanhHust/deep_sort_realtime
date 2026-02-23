@@ -8,10 +8,13 @@ try:
     import torch
 
     TORCH_INSTALLED = True
-    GPU = torch.cuda.is_available()
+    GPU = torch.cuda.is_available() or (
+        hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+    )
 except ModuleNotFoundError:
     TORCH_INSTALLED = False
     CLIP_INSTALLED = False
+    TORCHREID_INSTALLED = False
     GPU = False
 
 if TORCH_INSTALLED:

@@ -9,6 +9,8 @@ import pkg_resources
 import torch
 from PIL import Image
 
+from deep_sort_realtime.embedder import get_best_device
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,7 +53,7 @@ class Clip_Embedder(object):
             else:
                 model_wts_path = model_name
 
-        self.device = "cuda" if gpu else "cpu"
+        self.device = get_best_device(gpu)
         self.model, self.img_preprocess = clip.load(model_wts_path, device=self.device)
         self.model.eval()
 
@@ -59,7 +61,7 @@ class Clip_Embedder(object):
         self.bgr = bgr
 
         logger.info("Clip Embedder for Deep Sort initialised")
-        logger.info(f"- gpu enabled: {gpu}")
+        logger.info(f"- device: {self.device}")
         logger.info(f"- max batch size: {self.max_batch_size}")
         logger.info(f"- expects BGR: {self.bgr}")
         logger.info(f"- model name: {model_name}")

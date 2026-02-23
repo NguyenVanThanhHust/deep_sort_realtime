@@ -5,7 +5,10 @@ from datetime import datetime
 try:
     import torch
 
-    GPU = torch.cuda.is_available() and not os.environ.get("USE_CPU")
+    GPU = (
+        torch.cuda.is_available()
+        or (hasattr(torch.backends, "mps") and torch.backends.mps.is_available())
+    ) and not os.environ.get("USE_CPU")
     TORCH_INSTALLED = True
 except ModuleNotFoundError:
     GPU = False
