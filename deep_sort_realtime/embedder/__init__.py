@@ -21,8 +21,10 @@ def get_best_device(gpu=True):
     # torch.accelerator (PyTorch >= 2.4) provides unified detection across all backends
     if hasattr(torch, "accelerator") and hasattr(torch.accelerator, "is_available"):
         if torch.accelerator.is_available():
-            return torch.accelerator.current_accelerator().type
-        return "cpu"
+            try:
+                return torch.accelerator.current_accelerator().type
+            except RuntimeError:
+                pass  # fall through to manual checks below
     # Fallback for PyTorch < 2.4
     if torch.cuda.is_available():
         return "cuda"
