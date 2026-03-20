@@ -1,6 +1,3 @@
-import torch
-
-
 def get_best_device(gpu=True):
     """Determine the best available torch device.
 
@@ -20,6 +17,7 @@ def get_best_device(gpu=True):
     """
     if not gpu:
         return "cpu"
+    import torch
     # torch.accelerator (PyTorch >= 2.4) provides unified detection across all backends
     if hasattr(torch, "accelerator") and hasattr(torch.accelerator, "is_available"):
         if torch.accelerator.is_available():
