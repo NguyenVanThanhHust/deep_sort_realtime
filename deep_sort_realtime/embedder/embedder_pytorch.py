@@ -7,6 +7,7 @@ import pkg_resources
 import torch
 from torchvision.transforms import transforms
 
+from deep_sort_realtime.embedder import get_best_device
 from deep_sort_realtime.embedder.mobilenetv2_bottle import MobileNetV2_bottle
 
 logger = logging.getLogger(__name__)
@@ -49,15 +50,19 @@ class MobileNetv2_Embedder(object):
         assert os.path.exists(
             model_wts_path
         ), f"Mobilenetv2 model path {model_wts_path} does not exists!"
+        self.device = get_best_device(gpu)
         self.model = MobileNetV2_bottle(input_size=INPUT_WIDTH, width_mult=1.0)
-        self.model.load_state_dict(torch.load(model_wts_path))
+        self.model.load_state_dict(
+            torch.load(model_wts_path, map_location=self.device)
+        )
 
-        self.gpu = gpu and torch.cuda.is_available()
-        if self.gpu:
-            self.model.cuda()  # loads model to gpu
-            self.half = half
-            if self.half:
-                self.model.half()
+        self.gpu = self.device != "cpu"
+        self.model.to(self.device)
+
+        # Half precision: only enable on CUDA (MPS has limited float16 support)
+        if self.device == "cuda" and half:
+            self.half = True
+            self.model.half()
         else:
             self.half = False
 
@@ -67,7 +72,7 @@ class MobileNetv2_Embedder(object):
         self.bgr = bgr
 
         logger.info("MobileNetV2 Embedder for Deep Sort initialised")
-        logger.info(f"- gpu enabled: {self.gpu}")
+        logger.info(f"- device: {self.device}")
         logger.info(f"- half precision: {self.half}")
         logger.info(f"- max batch size: {self.max_batch_size}")
         logger.info(f"- expects BGR: {self.bgr}")
@@ -129,7 +134,7 @@ class MobileNetv2_Embedder(object):
         for this_batch in batch(preproc_imgs, bs=self.max_batch_size):
             this_batch = torch.cat(this_batch, dim=0)
             if self.gpu:
-                this_batch = this_batch.cuda()
+                this_batch = this_batch.to(self.device)
                 if self.half:
                     this_batch = this_batch.half()
             output = self.model.forward(this_batch)
@@ -171,11 +176,9 @@ class TorchReID_Embedder(object):
         if model_name=='osnet_ain_x1_0' and model_wts_path=='':
             model_wts_path = TORCHREID_OSNET_AIN_X1_0_MS_D_C_WTS
 
-        self.gpu = gpu and torch.cuda.is_available()
-        if self.gpu:
-            device = 'cuda'
-        else:
-            device = 'cpu'
+        self.device = get_best_device(gpu)
+        self.gpu = self.device != 'cpu'
+        device = self.device
 
         self.model = FeatureExtractor(
             model_name=model_name, 
@@ -186,7 +189,7 @@ class TorchReID_Embedder(object):
         self.bgr = bgr
 
         logger.info("TorchReID Embedder for Deep Sort initialised")
-        logger.info(f"- gpu enabled: {self.gpu}")
+        logger.info(f"- device: {self.device}")
         logger.info(f"- expects BGR: {self.bgr}")
 
         zeros = np.zeros((100, 100, 3), dtype=np.uint8)

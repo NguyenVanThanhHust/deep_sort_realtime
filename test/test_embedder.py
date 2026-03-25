@@ -1,3 +1,4 @@
+import os
 import unittest
 from pathlib import Path
 
@@ -8,10 +9,17 @@ try:
     import torch
 
     TORCH_INSTALLED = True
-    GPU = torch.cuda.is_available()
+    if hasattr(torch, "accelerator") and hasattr(torch.accelerator, "is_available"):
+        GPU = torch.accelerator.is_available()
+    else:
+        GPU = torch.cuda.is_available() or (
+            hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+        )
+    GPU = GPU and not os.environ.get("USE_CPU")
 except ModuleNotFoundError:
     TORCH_INSTALLED = False
     CLIP_INSTALLED = False
+    TORCHREID_INSTALLED = False
     GPU = False
 
 if TORCH_INSTALLED:
