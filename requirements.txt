@@ -1,7 +1,7 @@
 numpy
 scipy
 dataclasses
-opencv-python
+opencv-python<=4.9.*
 Pillow
 torch
 torchvision
