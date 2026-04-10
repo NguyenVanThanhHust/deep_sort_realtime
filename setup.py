@@ -29,6 +29,6 @@ setup(
     install_requires=[
         "numpy<2.0.0",                 # Forces the use of the stable 1.x branch
         "scipy<1.13.0",                # Ensures compatibility with NumPy 1.x
-        "opencv-python==4.9.0.80",     # Fixed version to match your environment
+        "opencv-python<=4.9.0.80",     # Fixed version to match your environment
     ],
 )
